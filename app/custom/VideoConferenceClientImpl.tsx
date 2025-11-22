@@ -82,7 +82,7 @@ export function VideoConferenceClientImpl(props: {
   useLowCPUOptimizer(room);
 
   return (
-    <div className="lk-room-container">
+    <div className="h-screen bg-background">
       <RoomContext.Provider value={room}>
         <KeyboardShortcuts />
         <VideoConference

@@ -29,6 +29,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
 import { useLowCPUOptimizer } from '@/lib/usePerfomanceOptimiser';
+// shadcn/ui components for PreJoin screen
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -71,12 +73,32 @@ export function PageClientImpl(props: {
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {connectionDetails === undefined || preJoinChoices === undefined ? (
-        <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-          <PreJoin
-            defaults={preJoinDefaults}
-            onSubmit={handlePreJoinSubmit}
-            onError={handlePreJoinError}
-          />
+        // shadcn/ui Card wrapper for PreJoin screen
+        <div className="flex items-center justify-center min-h-screen bg-background p-6">
+          <div className="w-full max-w-2xl space-y-6">
+            {/* Sofia.AI Branding Header */}
+            <div className="text-center space-y-2">
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+                Sofia.AI
+              </h1>
+              <p className="text-muted-foreground text-base">Technical Interview Platform</p>
+            </div>
+
+            {/* PreJoin Card */}
+            <Card className="w-full shadow-lg">
+              <CardHeader className="space-y-2 pb-4">
+                <CardTitle className="text-2xl">Join Interview Session</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-6">
+                {/* LiveKit PreJoin component - handles device selection, preview, and form submission */}
+                <PreJoin
+                  defaults={preJoinDefaults}
+                  onSubmit={handlePreJoinSubmit}
+                  onError={handlePreJoinError}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       ) : (
         <VideoConferenceComponent
@@ -97,12 +119,19 @@ function VideoConferenceComponent(props: {
     codec: VideoCodec;
   };
 }) {
+  // ============================================================================
+  // LiveKit Logic: E2EE Setup
+  // ============================================================================
   const keyProvider = new ExternalE2EEKeyProvider();
   const { worker, e2eePassphrase } = useSetupE2EE();
   const e2eeEnabled = !!(e2eePassphrase && worker);
 
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
 
+  // ============================================================================
+  // LiveKit Logic: Room Options Configuration
+  // Verified against: https://docs.livekit.io/home/client/connect.md
+  // ============================================================================
   const roomOptions = React.useMemo((): RoomOptions => {
     let videoCodec: VideoCodec | undefined = props.options.codec ? props.options.codec : 'vp9';
     if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
@@ -133,8 +162,14 @@ function VideoConferenceComponent(props: {
     };
   }, [props.userChoices, props.options.hq, props.options.codec]);
 
+  // ============================================================================
+  // LiveKit Logic: Room Instance Creation
+  // ============================================================================
   const room = React.useMemo(() => new Room(roomOptions), []);
 
+  // ============================================================================
+  // LiveKit Logic: E2EE Key Setup
+  // ============================================================================
   React.useEffect(() => {
     if (e2eeEnabled) {
       keyProvider
@@ -157,18 +192,29 @@ function VideoConferenceComponent(props: {
     }
   }, [e2eeEnabled, room, e2eePassphrase]);
 
+  // ============================================================================
+  // LiveKit Logic: Connection Options
+  // Verified against: https://docs.livekit.io/home/client/connect.md
+  // ============================================================================
   const connectOptions = React.useMemo((): RoomConnectOptions => {
     return {
       autoSubscribe: true,
     };
   }, []);
 
+  // ============================================================================
+  // LiveKit Logic: Room Connection and Event Handlers
+  // Verified against: https://docs.livekit.io/home/client/events.md
+  // Event handlers: RoomEvent.Disconnected, RoomEvent.EncryptionError, RoomEvent.MediaDevicesError
+  // ============================================================================
   React.useEffect(() => {
+    // Register event handlers before connecting
     room.on(RoomEvent.Disconnected, handleOnLeave);
     room.on(RoomEvent.EncryptionError, handleEncryptionError);
     room.on(RoomEvent.MediaDevicesError, handleError);
 
     if (e2eeSetupComplete) {
+      // Connect to room with server URL and token
       room
         .connect(
           props.connectionDetails.serverUrl,
@@ -178,6 +224,8 @@ function VideoConferenceComponent(props: {
         .catch((error) => {
           handleError(error);
         });
+
+      // Publish tracks based on user choices
       if (props.userChoices.videoEnabled) {
         room.localParticipant.setCameraEnabled(true).catch((error) => {
           handleError(error);
@@ -189,6 +237,8 @@ function VideoConferenceComponent(props: {
         });
       }
     }
+
+    // Cleanup: Remove event handlers on unmount
     return () => {
       room.off(RoomEvent.Disconnected, handleOnLeave);
       room.off(RoomEvent.EncryptionError, handleEncryptionError);
@@ -196,8 +246,14 @@ function VideoConferenceComponent(props: {
     };
   }, [e2eeSetupComplete, room, props.connectionDetails, props.userChoices]);
 
+  // ============================================================================
+  // LiveKit Logic: Performance Optimization
+  // ============================================================================
   const lowPowerMode = useLowCPUOptimizer(room);
 
+  // ============================================================================
+  // LiveKit Logic: Event Handler Callbacks
+  // ============================================================================
   const router = useRouter();
   const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
   const handleError = React.useCallback((error: Error) => {
@@ -217,15 +273,29 @@ function VideoConferenceComponent(props: {
     }
   }, [lowPowerMode]);
 
+  // ============================================================================
+  // Sofia.AI: Layout and Presentation
+  // ============================================================================
   return (
-    <div className="lk-room-container">
+    <div className="h-screen bg-background flex flex-col">
+      {/* LiveKit RoomContext Provider - provides room instance to child components */}
       <RoomContext.Provider value={room}>
+        {/* LiveKit Keyboard Shortcuts - handles keyboard shortcuts for meeting controls */}
         <KeyboardShortcuts />
+
+        {/* LiveKit VideoConference Component - renders the main meeting interface
+            Props remain unchanged to preserve all LiveKit functionality:
+            - chatMessageFormatter: formats chat message links
+            - SettingsComponent: custom settings menu component */}
         <VideoConference
           chatMessageFormatter={formatChatMessageLinks}
           SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
         />
+
+        {/* LiveKit Debug Mode - displays debug information */}
         <DebugMode />
+
+        {/* Sofia.AI Recording Indicator - shows recording status */}
         <RecordingIndicator />
       </RoomContext.Provider>
     </div>

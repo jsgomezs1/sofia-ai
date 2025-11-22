@@ -1,8 +1,11 @@
 import { useIsRecording } from '@livekit/components-react';
 import * as React from 'react';
 import toast from 'react-hot-toast';
+import { Badge } from '@/components/ui/badge';
+import { Circle } from 'lucide-react';
 
 export function RecordingIndicator() {
+  // LiveKit hook to check recording status
   const isRecording = useIsRecording();
   const [wasRecording, setWasRecording] = React.useState(false);
 
@@ -10,31 +13,38 @@ export function RecordingIndicator() {
     if (isRecording !== wasRecording) {
       setWasRecording(isRecording);
       if (isRecording) {
-        toast('This meeting is being recorded', {
-          duration: 3000,
+        toast('This interview session is being recorded', {
+          duration: 4000,
           icon: '🎥',
           position: 'top-center',
-          className: 'lk-button',
           style: {
-            backgroundColor: 'var(--lk-danger3)',
-            color: 'var(--lk-fg)',
+            backgroundColor: 'hsl(var(--card))',
+            color: 'hsl(var(--foreground))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            fontWeight: '500',
           },
         });
       }
     }
   }, [isRecording]);
 
+  // Only render the badge when recording is active
+  if (!isRecording) {
+    return null;
+  }
+
+  // Sofia.AI styled Badge component with pulse animation
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        width: '100%',
-        height: '100%',
-        boxShadow: isRecording ? 'var(--lk-danger3) 0px 0px 0px 3px inset' : 'none',
-        pointerEvents: 'none',
-      }}
-    ></div>
+    <div className="fixed top-4 right-4 z-50">
+      <Badge
+        variant="destructive"
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium shadow-lg animate-pulse"
+      >
+        <Circle className="w-2 h-2 fill-white" />
+        Recording
+      </Badge>
+    </div>
   );
 }

@@ -1,15 +1,27 @@
+// shadcn/ui imports
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// LiveKit imports
 import React from 'react';
 import {
-  MediaDeviceMenu,
   TrackReference,
-  TrackToggle,
   useLocalParticipant,
+  useMediaDeviceSelect,
+  useTrackToggle,
   VideoTrack,
 } from '@livekit/components-react';
 import { BackgroundBlur, VirtualBackground } from '@livekit/track-processors';
 import { isLocalTrack, LocalTrackPublication, Track } from 'livekit-client';
 import Desk from '../public/background-images/desk.jpeg';
 import Nature from '../public/background-images/nature.jpg';
+
 // Background image paths
 const BACKGROUND_IMAGES = [
   { name: 'Desk', path: Desk },
@@ -19,8 +31,23 @@ const BACKGROUND_IMAGES = [
 // Background options
 type BackgroundType = 'none' | 'blur' | 'image';
 
-export function CameraSettings() {
+// Component props interface with proper TypeScript types
+interface CameraSettingsProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function CameraSettings(props: CameraSettingsProps = {}) {
+  // LiveKit hooks and state
   const { cameraTrack, localParticipant } = useLocalParticipant();
+
+  // LiveKit device selection hook
+  const { devices, activeDeviceId, setActiveMediaDevice } = useMediaDeviceSelect({
+    kind: 'videoinput',
+  });
+
+  // LiveKit track toggle hook
+  const { enabled: cameraEnabled, toggle: toggleCamera } = useTrackToggle({
+    source: Track.Source.Camera,
+  });
+
   const [backgroundType, setBackgroundType] = React.useState<BackgroundType>(
     (cameraTrack as LocalTrackPublication)?.track?.getProcessor()?.name === 'background-blur'
       ? 'blur'
@@ -33,12 +60,14 @@ export function CameraSettings() {
     null,
   );
 
+  // LiveKit track reference
   const camTrackRef: TrackReference | undefined = React.useMemo(() => {
     return cameraTrack
       ? { participant: localParticipant, publication: cameraTrack, source: Track.Source.Camera }
       : undefined;
   }, [localParticipant, cameraTrack]);
 
+  // Background selection logic
   const selectBackground = (type: BackgroundType, imagePath?: string) => {
     setBackgroundType(type);
     if (type === 'image' && imagePath) {
@@ -48,6 +77,7 @@ export function CameraSettings() {
     }
   };
 
+  // LiveKit background processor effect
   React.useEffect(() => {
     if (isLocalTrack(cameraTrack?.track)) {
       if (backgroundType === 'blur') {
@@ -61,7 +91,8 @@ export function CameraSettings() {
   }, [cameraTrack, backgroundType, virtualBackgroundImagePath]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    <div {...props} className="flex flex-col gap-4">
+      {/* LiveKit VideoTrack component */}
       {camTrackRef && (
         <VideoTrack
           style={{
@@ -69,103 +100,91 @@ export function CameraSettings() {
             objectFit: 'contain',
             objectPosition: 'right',
             transform: 'scaleX(-1)',
+            borderRadius: '0.5rem',
           }}
           trackRef={camTrackRef}
         />
       )}
 
-      <section className="lk-button-group">
-        <TrackToggle source={Track.Source.Camera}>Camera</TrackToggle>
-        <div className="lk-button-group-menu">
-          <MediaDeviceMenu kind="videoinput" />
-        </div>
-      </section>
+      {/* Sofia.AI styled camera controls with LiveKit hooks */}
+      <div className="flex items-center gap-3">
+        <Select value={activeDeviceId} onValueChange={(deviceId) => setActiveMediaDevice(deviceId)}>
+          <SelectTrigger className="flex-1 h-10">
+            <SelectValue placeholder="Select camera" />
+          </SelectTrigger>
+          <SelectContent>
+            {devices.map((device) => (
+              <SelectItem key={device.deviceId} value={device.deviceId}>
+                {device.label || `Camera ${device.deviceId.slice(0, 5)}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <div style={{ marginTop: '10px' }}>
-        <div style={{ marginBottom: '8px' }}>Background Effects</div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button
+        <Button
+          variant={cameraEnabled ? 'default' : 'outline'}
+          size="default"
+          onClick={() => toggleCamera()}
+          className={
+            cameraEnabled
+              ? 'min-w-[100px] bg-accent hover:bg-accent/90 text-accent-foreground'
+              : 'min-w-[100px]'
+          }
+        >
+          {cameraEnabled ? 'Camera On' : 'Camera Off'}
+        </Button>
+      </div>
+
+      {/* Sofia.AI styled Background Effects section */}
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-foreground">Background Effects</div>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant={backgroundType === 'none' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => selectBackground('none')}
-            className="lk-button"
-            aria-pressed={backgroundType === 'none'}
-            style={{
-              border: backgroundType === 'none' ? '2px solid #0090ff' : '1px solid #d1d1d1',
-              minWidth: '80px',
-            }}
+            className={
+              backgroundType === 'none'
+                ? 'min-w-[80px] bg-accent hover:bg-accent/90 text-accent-foreground'
+                : 'min-w-[80px]'
+            }
           >
             None
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant={backgroundType === 'blur' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => selectBackground('blur')}
-            className="lk-button"
-            aria-pressed={backgroundType === 'blur'}
-            style={{
-              border: backgroundType === 'blur' ? '2px solid #0090ff' : '1px solid #d1d1d1',
-              minWidth: '80px',
-              backgroundColor: '#f0f0f0',
-              position: 'relative',
-              overflow: 'hidden',
-              height: '60px',
-            }}
+            className={
+              backgroundType === 'blur'
+                ? 'min-w-[80px] h-[60px] relative overflow-hidden bg-accent hover:bg-accent/90 text-accent-foreground'
+                : 'min-w-[80px] h-[60px] relative overflow-hidden'
+            }
           >
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: '#e0e0e0',
-                filter: 'blur(8px)',
-                zIndex: 0,
-              }}
-            />
-            <span
-              style={{
-                position: 'relative',
-                zIndex: 1,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                padding: '2px 5px',
-                borderRadius: '4px',
-                fontSize: '12px',
-              }}
-            >
-              Blur
-            </span>
-          </button>
+            <div className="absolute inset-0 bg-muted" style={{ filter: 'blur(8px)', zIndex: 0 }} />
+            <span className="relative z-10 bg-black/60 px-2 py-0.5 rounded text-xs">Blur</span>
+          </Button>
 
           {BACKGROUND_IMAGES.map((image) => (
-            <button
+            <Button
               key={image.path.src}
-              onClick={() => selectBackground('image', image.path.src)}
-              className="lk-button"
-              aria-pressed={
+              variant={
                 backgroundType === 'image' && virtualBackgroundImagePath === image.path.src
+                  ? 'default'
+                  : 'outline'
               }
+              size="sm"
+              onClick={() => selectBackground('image', image.path.src)}
+              className="w-[80px] h-[60px] p-0 overflow-hidden"
               style={{
                 backgroundImage: `url(${image.path.src})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                width: '80px',
-                height: '60px',
-                border:
-                  backgroundType === 'image' && virtualBackgroundImagePath === image.path.src
-                    ? '2px solid #0090ff'
-                    : '1px solid #d1d1d1',
               }}
             >
-              <span
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.6)',
-                  padding: '2px 5px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                }}
-              >
-                {image.name}
-              </span>
-            </button>
+              <span className="bg-black/60 px-2 py-0.5 rounded text-xs">{image.name}</span>
+            </Button>
           ))}
         </div>
       </div>

@@ -1,7 +1,33 @@
 {
   "mcpServers": {
     "livekit-docs": {
-      "url": "https://docs.livekit.io/mcp"
+      "url": "https://docs.livekit.io/mcp",
+      "disabled": false,
+      "autoApprove": [
+        "get_docs_overview",
+        "get_pages",
+        "docs_search",
+        "docs_search",
+        "get_pages",
+        "docs_search",
+        "get_pages",
+        "docs_search",
+        "code_search",
+        "get_pages",
+        "docs_search",
+        "docs_search"
+      ]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "get_project_registries"
+      ]
     }
   }
 }
