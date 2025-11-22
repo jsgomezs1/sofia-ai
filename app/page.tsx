@@ -22,82 +22,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-// Mock data for recent interviews
-const recentInterviews = [
-  { id: 1, title: 'Frontend Interview', time: '2 hours ago', techStack: 'React, TypeScript' },
-  { id: 2, title: 'Backend Assessment', time: 'Yesterday', techStack: 'Python, Django' },
-  { id: 3, title: 'Full-Stack Interview', time: '2 days ago', techStack: 'Node.js, React' },
-];
 
-const templates = [
-  { id: 1, name: 'Frontend Developer', stacks: ['React', 'TypeScript', 'CSS'] },
-  { id: 2, name: 'Backend Developer', stacks: ['Python', 'Django', 'PostgreSQL'] },
-  { id: 3, name: 'Full-Stack Developer', stacks: ['Node.js', 'React', 'MongoDB'] },
-];
 
-function Sidebar() {
-  return (
-    <aside className="w-64 border-r border-border bg-muted/30 p-6 space-y-6">
-      {/* Recent Interviews */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Recent
-        </h3>
-        <div className="space-y-2">
-          {recentInterviews.map((interview) => (
-            <button
-              key={interview.id}
-              className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors group"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate group-hover:text-primary">
-                    {interview.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{interview.time}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Stats */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Today
-        </h3>
-        <div className="p-3 rounded-lg bg-muted/50">
-          <p className="text-2xl font-bold">3</p>
-          <p className="text-xs text-muted-foreground">Interviews conducted</p>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Templates */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Templates
-        </h3>
-        <div className="space-y-2">
-          {templates.map((template) => (
-            <button
-              key={template.id}
-              className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors group"
-            >
-              <p className="text-sm font-medium group-hover:text-primary">{template.name}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{template.stacks.join(', ')}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-    </aside>
-  );
-}
 
 function InterviewConfiguration() {
   const router = useRouter();
