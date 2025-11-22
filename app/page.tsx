@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { TechStackSelection } from '@/lib/TechStackSelection';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { supabase } from '@/lib/supabase';
 import {
   Shield,
   Clock,
@@ -20,10 +21,9 @@ import {
   FileText,
   Menu,
   ChevronRight,
+  User,
+  Phone,
 } from 'lucide-react';
-
-
-
 
 function InterviewConfiguration() {
   const router = useRouter();
@@ -31,9 +31,12 @@ function InterviewConfiguration() {
   const [e2ee, setE2ee] = useState(false);
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
   const [techStack, setTechStack] = useState<string>('');
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [micReady, setMicReady] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Check microphone and camera permissions
   useEffect(() => {
@@ -52,17 +55,40 @@ function InterviewConfiguration() {
 
   const startInterview = async () => {
     setIsStarting(true);
-    // Simulate brief loading
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    setSaveError(null);
 
-    if (e2ee) {
-      router.push(`/rooms/${generateRoomId()}#${encodePassphrase(sharedPassphrase)}`);
-    } else {
-      router.push(`/rooms/${generateRoomId()}`);
+    try {
+      // Save user data to Supabase
+      const { data, error } = await supabase
+        .from('user')
+        .insert({
+          name: name.trim(),
+          phone_number: phoneNumber.trim(),
+        } as any)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('User saved successfully:', data);
+
+      // Simulate brief loading
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      if (e2ee) {
+        router.push(`/rooms/${generateRoomId()}#${encodePassphrase(sharedPassphrase)}`);
+      } else {
+        router.push(`/rooms/${generateRoomId()}`);
+      }
+    } catch (error) {
+      console.error('Error saving user data:', error);
+      setSaveError(error instanceof Error ? error.message : 'Failed to save user data');
+      setIsStarting(false);
     }
   };
 
-  const canStart = techStack !== '';
+  const canStart = techStack !== '' && name.trim() !== '' && phoneNumber.trim() !== '';
 
   return (
     <div className="flex-1 p-8 max-w-4xl mx-auto">
@@ -77,6 +103,51 @@ function InterviewConfiguration() {
 
         {/* Configuration Form */}
         <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+          {/* Personal Information */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Personal Information</h3>
+
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm font-medium">
+                Full Name <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="pl-10 h-11"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Phone Number Field */}
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium">
+                Phone Number <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="pl-10 h-11"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           {/* Tech Stack Selection */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">
@@ -117,6 +188,17 @@ function InterviewConfiguration() {
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
+                {name && phoneNumber ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+                )}
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className={name && phoneNumber ? 'text-foreground' : 'text-muted-foreground'}>
+                  Personal Info {name && phoneNumber ? 'Complete' : 'Required'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
                 {techStack ? (
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                 ) : (
@@ -130,6 +212,14 @@ function InterviewConfiguration() {
             </div>
           </div>
         </div>
+
+        {/* Error Message */}
+        {saveError && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+            <p className="text-sm text-destructive font-medium">Error saving user data</p>
+            <p className="text-xs text-destructive/80 mt-1">{saveError}</p>
+          </div>
+        )}
 
         {/* Start Button */}
         <Button
@@ -150,7 +240,9 @@ function InterviewConfiguration() {
 
         {!canStart && (
           <p className="text-sm text-center text-muted-foreground">
-            Select a tech stack to enable interview start
+            {!name || !phoneNumber
+              ? 'Please fill in your personal information'
+              : 'Select a tech stack to enable interview start'}
           </p>
         )}
       </div>

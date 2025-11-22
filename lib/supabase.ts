@@ -7,6 +7,12 @@ export interface Tech {
   name: string | null;
 }
 
+export interface User {
+  id: number;
+  name: string;
+  phone_number: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -14,6 +20,11 @@ export interface Database {
         Row: Tech;
         Insert: Omit<Tech, 'id' | 'created_at'>;
         Update: Partial<Omit<Tech, 'id' | 'created_at'>>;
+      };
+      user: {
+        Row: User;
+        Insert: Omit<User, 'id'>;
+        Update: Partial<Omit<User, 'id'>>;
       };
     };
   };
