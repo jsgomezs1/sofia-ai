@@ -7,6 +7,7 @@ import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { SettingsMenu } from '@/lib/SettingsMenu';
 import { ConnectionDetails } from '@/lib/types';
+import { EmotionIndicator } from '@/lib/EmotionIndicator';
 import {
   formatChatMessageLinks,
   LocalUserChoices,
@@ -282,6 +283,9 @@ function VideoConferenceComponent(props: {
       <RoomContext.Provider value={room}>
         {/* LiveKit Keyboard Shortcuts - handles keyboard shortcuts for meeting controls */}
         <KeyboardShortcuts />
+
+        {/* Emotion indicator for the local participant, positioned near the mic button */}
+        <EmotionIndicator />
 
         {/* LiveKit VideoConference Component - renders the main meeting interface
             Props remain unchanged to preserve all LiveKit functionality:

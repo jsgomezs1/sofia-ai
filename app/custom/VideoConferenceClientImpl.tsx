@@ -16,6 +16,7 @@ import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { SettingsMenu } from '@/lib/SettingsMenu';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
 import { useLowCPUOptimizer } from '@/lib/usePerfomanceOptimiser';
+import { EmotionIndicator } from '@/lib/EmotionIndicator';
 
 export function VideoConferenceClientImpl(props: {
   liveKitUrl: string;
@@ -83,6 +84,7 @@ export function VideoConferenceClientImpl(props: {
 
   return (
     <div className="h-screen bg-background">
+      <EmotionIndicator />
       <RoomContext.Provider value={room}>
         <KeyboardShortcuts />
         <VideoConference
