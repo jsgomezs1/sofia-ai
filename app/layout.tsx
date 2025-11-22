@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     url: 'https://sofia.ai',
     images: [
       {
-        url: '/images/livekit-meet-open-graph.png',
+        url: '/images/ff-landing.png',
         width: 2000,
         height: 1000,
         type: 'image/png',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     apple: [
       {
         rel: 'apple-touch-icon',
-        url: '/images/livekit-apple-touch.png',
+        url: '/images/logo',
         sizes: '180x180',
       },
       { rel: 'mask-icon', url: '/images/livekit-safari-pinned-tab.svg', color: '#E1D5F2' },
