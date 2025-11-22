@@ -1,4 +1,4 @@
-export function encodePassphrase(passphrase: string) {
+  export function encodePassphrase(passphrase: string) {
   return encodeURIComponent(passphrase);
 }
 
